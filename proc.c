@@ -88,6 +88,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = DEFAULTP;
+  p->maxp = DEFAULTP;
 
   release(&ptable.lock);
 
@@ -319,6 +321,7 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
+/*
 void
 scheduler(void)
 {
@@ -354,6 +357,58 @@ scheduler(void)
 
   }
 }
+*/
+
+void
+scheduler(void)
+{
+  struct proc *p;
+  struct proc *p1;
+  struct cpu *c = mycpu();
+  c->proc = 0;
+
+  for(;;)
+  {
+    sti();
+    struct proc *highP;
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if(p->state != RUNNABLE)
+        continue;
+        
+      highP = p;
+
+      for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++)
+      {
+        if(p1->state != RUNNABLE)
+          continue;
+        if(highP->priority < p1->priority)
+          highP = p1;
+      }
+
+      //p = highP;
+      c->proc = highP;
+      highP->access += 1; //access times count
+
+      //starvation aviodness
+      if(highP->priority > DEFAULTP)
+        highP->priority--;
+      else
+        highP->priority = DEFAULTP;
+
+      switchuvm(highP);
+      highP->state = RUNNING;
+      swtch(&(c->scheduler), highP->context);
+      switchkvm();
+
+      c->proc = 0;
+    }
+
+    release(&ptable.lock);
+  }
+}
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -531,4 +586,108 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+/*
+int
+cps()
+{
+struct proc *p;
+
+// Enable interrupts on this processor.
+sti();
+
+ // Loop over process table looking for process with pid.
+acquire(&ptable.lock);
+cprintf("name \t pid \t state \n");
+for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+   if ( p->state == SLEEPING )
+     cprintf("%s \t %d  \t SLEEPING \n ", p->name, p->pid );
+   else if ( p->state == RUNNING )
+     cprintf("%s \t %d  \t RUNNING \n ", p->name, p->pid );
+}
+
+release(&ptable.lock);
+
+return 22;
+}  
+*/
+
+int
+cps(void)
+{
+  struct proc *p;
+  int totalsize = 0;
+  sti();
+  acquire(&ptable.lock);
+  cprintf("name \t\t pid \t state \t \t priority\taccess\n");
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->priority != 0){
+      cprintf("%s", p->name);
+
+      if(strlen(p->name) < 10){
+        for(int i = 10; i > strlen(p->name); i--)
+          cprintf(" ");
+      }
+
+      if(p->state == SLEEPING)
+        cprintf("\t %d \t SLEEPING \t %d \t\t %d\n", p->pid, p->priority, p->access);
+      else if(p->state == RUNNING)
+        cprintf("\t %d \t RUNNING \t %d \t\t %d\n", p->pid, p->priority, p->access);
+      else if(p->state == RUNNABLE)
+        cprintf("\t %d \t RUNNABLE \t %d \t\t %d\n", p->pid, p->priority, p->access);
+      totalsize += p->sz;
+
+    }
+  }
+  cprintf("memory usage: %d bytes\n", totalsize);
+  release(&ptable.lock);
+  return 0;
+}
+
+int
+changePriority(int pid, int priority)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid){
+      if(priority > p->priority)
+        p->maxp = priority;
+      p->priority = priority;
+      break;
+    }
+  }
+  
+  release(&ptable.lock);
+
+  return pid;
+}
+
+int
+findpid(int pid)
+{
+  struct proc *p;
+  bool isfind = false;
+  acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid){
+      isfind = true;
+      break;
+    }
+  }
+  if(isfind){
+    cprintf("pid: %d\n", p->pid);
+    cprintf("name: %s\n", p->name);
+    cprintf("size: %d\n", p->sz);
+    cprintf("priority: %d\n", p->priority);
+    cprintf("highest priority: %d\n", p->maxp);
+    cprintf("parent pid: %d\n", p->parent->pid);
+  }else
+    cprintf("pid not found in ptable\n");
+  
+  release(&ptable.lock);
+  return pid;
 }
