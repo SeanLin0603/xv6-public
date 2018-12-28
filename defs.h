@@ -123,6 +123,8 @@ void            yield(void);
 int		cps(void);
 int 		changePriority(int pid, int priority);
 int 		findpid(int pid);
+int		taskmgr(void);
+
 // swtch.S
 void            swtch(struct context**, struct context*);
 

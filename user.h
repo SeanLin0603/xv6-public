@@ -26,6 +26,10 @@ int uptime(void);
 int cps(void);
 int cp(int, int);
 int find(int);
+int date(struct rtcdate*);
+void pulseZero(int, char*);
+int shutdown(void);
+int taskmgr(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

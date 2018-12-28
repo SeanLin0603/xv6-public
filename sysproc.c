@@ -117,3 +117,28 @@ sys_find(void)
     return -1;
   return findpid(pid);
 }
+
+int
+sys_date(struct rtcdate *r)
+{
+  if (argptr(0, (void *)&r, sizeof(*r)) < 0)
+    return -1;
+
+  cmostime(r);
+  return 0;
+}
+
+int
+sys_shutdown(void)
+{
+  char *p = "Shutdown";
+  for(; *p; p++)
+    outw(0xB004, 0x2000);
+  return 0;
+}
+
+int
+sys_taskmgr(void)
+{
+  return taskmgr();
+}

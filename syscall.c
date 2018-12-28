@@ -106,6 +106,10 @@ extern int sys_uptime(void);
 extern int sys_cps(void);
 extern int sys_cp(void);
 extern int sys_find(void);
+extern int sys_date(void);
+extern int sys_shutdown(void);
+extern int sys_taskmgr(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -132,6 +136,9 @@ static int (*syscalls[])(void) = {
 [SYS_cps]     sys_cps,
 [SYS_cp]      sys_cp,
 [SYS_find]    sys_find,
+[SYS_date]    sys_date,
+[SYS_shutdown] sys_shutdown,
+[SYS_taskmgr] sys_taskmgr,
 };
 
 void

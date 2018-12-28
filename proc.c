@@ -691,3 +691,12 @@ findpid(int pid)
   release(&ptable.lock);
   return pid;
 }
+
+int
+taskmgr(void)
+{
+ 
+	cprintf("This is a taskmgr program\n");
+  
+  return 0;
+}

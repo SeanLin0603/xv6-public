@@ -23,3 +23,6 @@
 #define SYS_cps    22
 #define SYS_cp     23
 #define SYS_find   24
+#define SYS_date   25
+#define SYS_shutdown 26
+#define SYS_taskmgr 27
