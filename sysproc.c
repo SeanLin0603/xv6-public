@@ -131,12 +131,10 @@ sys_date(struct rtcdate *r)
 int
 sys_shutdown(void)
 {
-  char *p = "Shutdown";
-  for(; *p; p++)
-    outw(0xB004, 0x2000);
+  cprintf("shutdown signal sent\n");
+  outw(0xB004, 0x0|0x2000);
   return 0;
 }
-
 int
 sys_taskmgr(void)
 {
